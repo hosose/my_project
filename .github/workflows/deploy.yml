@@ -28,3 +28,18 @@ jobs:
                 ls -al
                 cat main.py
               shell: bash
+
+            # CI 쪽 서버에서 EC2 서버(배포용 서버)로 배포 -> SSH
+            # 사전 -> AWS에서 EC2 하나 생성 -> ip/domain or ubuntu(사용자명) , key는 pem파일
+            # -> Github 상 해당 저장소에 secrets 변수로 위의 3개 값을 세팅
+            - name: source code copy to EC2
+              uses: appleboy/scp-action@master
+              with:
+                host: ${{ secrets.HOST }}
+                username: ${{ secrets.USERNAME }}
+                key: ${{ secrets.EC2_KEY }}
+                port: 22
+                # 복사할 대상 (편의상 .(현재디렉토리))
+                source: .
+                # ubuntu os 가 세팅된 ec2 서버의 /home/ubuntu/projects/*.* 복사
+                target: "/home/ubuntu/projects"
