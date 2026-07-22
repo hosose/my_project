@@ -18,4 +18,13 @@ jobs:
         steps:
             # 1. github에 저장되어 있는 최신 내용을 체크아웃(소스를 모두 내려 받음)
             - name: 코드 checkout
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
+
+            # 확인 or 단위테스트(생략)
+            - name: 확인 검증
+              # 여러개 명령어 작동 시 -> | 를 통해서 배치
+              run: |
+                pwd
+                ls -al
+                cat main.py
+              shell: bash
