@@ -1,0 +1,78 @@
+# 각각의 서비스 주체들이 구성-> 각 주체는 컨테이너임
+services:
+  # 서비스명과 컨테이너명을 통상 같이 사용하기도 함 -> 관리상 편리함
+  # -> 코드 내부에서 접속시 도메인(서비스명) 정보 됨
+  db:
+    image: mysql
+    container_name: mysql_db
+    # 컨테이너가 중단되면(오류발생, 재부팅, 수동정지후) 되면 -> 자동 항상 구동되게 설정
+    restart: always
+    environment:
+      # root 계정의 초기 비번
+      MYSQL_ROOT_PASSWORD: 1234
+      # 컨테이너 생성시 최초 구성되는 DB
+      MYSQL_DATABASE: memo
+      # 일반 사용자 계정 생성
+      MYSQL_USER: guest
+      MYSQL_PASSWORD: 1234
+    # 디비를 삭제하고 다시 설치해도, 데이터는 보존된다!!
+    volumes:
+      - mysql-vol:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - my-net
+
+  # fastapi 기반으로 작성된 백엔드 코드, was 담당
+  app:
+    # app이라는 디렉토리 내에 존재하는 Dockerfile을 기반으로 빌드->이미지 생성->컨테이너 구성해라
+    build: ./app
+    container_name: fastapi_app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    # Dockerfile의 CMD or ENTRYPOINT + CMD => 데몬 띠우기와 동일한 의미
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    # 볼륨 : 바인드 마운트
+    volumes:
+      - ./app:/app # 호스트OS의 경로(개발PC):컨테이너 작업디렉토리 경로 공유로 지정
+    # 환경변수 : app => db 엑세스 => SQL 실행 => 결과 획득 하기 위해 연결정보필요
+    environment:
+      # SQLAlchemy + 전용드라이버 브릿지 하여 사용시 표기법
+      # 프로토콜명://아이디:비번@ip(서비스명):port/데이터베이스명
+      # 차후 파이썬 코드에서 dotenv 패키지 활용 -> 환경변수 엑세스 가능함
+      DATABASE_URL: "mysql+pymysql://guest:1234@db:3306/memo"
+    networks:
+      - my-net
+    # 의존성 명시 : 특정 컨테이너가 먼저 정상 가동중이여야만 해당 컨테이너가 작동된다
+    depends_on:
+      # 현재 코드는 관계 없음, main.py가 db 사용을 하지 않음. 현재는 참고용
+      - db
+
+  # nginx 리버스 프록시 서비스 -> web 서버 담당
+  # 클라이언트 요청 => nginx 대응 => 해당 요청을 was쪽으로 프록시(전달), 80포트로만 대응
+  # 향후 클라우드에서 80만 오픈 (외부망에는 이 컨테이너만 연결)
+  proxy:
+    image: nginx:alpine
+    container_name: nginx_proxy
+    restart: unless-stopped
+    # 프록시할 포트
+    ports:
+      - "80:80"
+    # 볼륨 (프록시 구성에 필요한 설정 파일을 외부(호스트 OS)로 공유)
+    # web.conf 의 내용이 default.conf 쪽으로 반영됨
+    volumes:
+      - ./nginx/web.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - my-net
+    depends_on:
+      - app
+
+# 네트워크 -> 각 컨테이너들이 연결되는 포인트
+networks:
+  my-net:
+    driver: bridge
+
+# 볼륨 -> 데이터 백업등
+volumes:
+  mysql-vol:
