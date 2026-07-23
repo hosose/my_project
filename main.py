@@ -47,6 +47,14 @@ def index3_page(req: Request):
         name="index3.html"
     )
 
+
+@app.get("/auth/login")
+def login(req: Request):
+    return templates.TemplateResponse(
+        request=req, 
+        name="login.html"
+    )
+
 '''
 # 동적으로도 가능
 @app.get("/{page_name}.html")
