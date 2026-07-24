@@ -53,7 +53,7 @@ jobs:
               host: ${{ secrets.HOST }}
               username: ${{ secrets.USERNAME }}
               key: ${{ secrets.EC2_KEY }}
-              source: "docker-compose.yml,nginx/"
+              source: "docker-compose.yml"
               target: /home/ubuntu
 
           # 2. EC2 접속 후 down -> pull -> up 순서로 실행
