@@ -27,7 +27,7 @@ jobs:
                 context: ./app
                 file: ./app/Dockerfile
                 push: true
-                tags: ${{ secrets.DOCKER_USERNAME }}/fastapi-app:1.0
+                tags: ${{ secrets.DOCKER_USERNAME }}/fastapi-app:1.1
             # nginx-proxy:1.0 형태로 이미지 빌드 -> 푸시
             - name: Build and Push proxy-nginx
               uses: docker/build-push-action@v4
@@ -71,6 +71,8 @@ jobs:
                 # 작업 디렉토리 이동 (docker-compose.yml 존재하는 위치)
                 cd /home/ubuntu
                 # 필요시 .env 생성 -> 시크릿 변수 읽어서 파일 처리 (여기서는 생략)
+                # 최신 이미지 가져오기
+                docker-compose pull
                 # 컨테이너 재생성
                 docker-compose up -d
                 # 사용하지 않는 이미지 삭제

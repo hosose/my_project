@@ -27,7 +27,7 @@ services:
   app:
     # 로컬 build => 도커 허브에서 내려받는 방식 변경, 추후 .env 에서 획득한다
     # image: ${DOCKER_USERNAME}/fastapi-app:1.0
-    image: hosose/fastapi-app:1.0
+    image: hosose/fastapi-app:1.1
     container_name: fastapi_app
     restart: unless-stopped
     ports:
