@@ -50,21 +50,21 @@ jobs:
           - name: Copy files to EC2 via SCP
             uses: appleboy/scp-action@v0.1.7
             with:
-              host: ${{ secrets.EC2_HOST }}
-              username: ${{ secrets.EC2_USERNAME }}
-              key: ${{ secrets.EC2_SSH_KEY }}
+              host: ${{ secrets.HOST }}
+              username: ${{ secrets.USERNAME }}
+              key: ${{ secrets.EC2_KEY }}
               source: "docker-compose.yml,nginx/"
-              target: ${{ secrets.EC2_TARGET }}
+              target: /home/ubuntu
 
           # 2. EC2 접속 후 down -> pull -> up 순서로 실행
           - name: Execute remote SSH commands
             uses: appleboy/ssh-action@v1.0.3
             with:
-              host: ${{ secrets.EC2_HOST }}
-              username: ${{ secrets.EC2_USERNAME }}
-              key: ${{ secrets.EC2_SSH_KEY }}
+              host: ${{ secrets.HOST }}
+              username: ${{ secrets.USERNAME }}
+              key: ${{ secrets.EC2_KEY }}
               script: |
-                cd ${{ secrets.EC2_TARGET }}
+                cd /home/ubuntu
                 docker-compose down
                 docker-compose pull
                 docker-compose up -d
