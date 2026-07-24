@@ -36,5 +36,36 @@ jobs:
                 file: ./nginx/Dockerfile
                 push: true
                 tags: ${{ secrets.DOCKER_USERNAME }}/nginx-proxy:1.0
+    
+    # 실습
     # EC2에 docker-compose.yml, 설정파일 등 copy, 도커컴포즈 작동
-    # cd:
+    cd:
+        needs: ci
+        runs-on: ubuntu-latest
+        steps:
+          - name: 코드 checkout
+            uses: actions/checkout@v4
+
+          # 1. 필요 파일(docker-compose.yml 및 nginx 설정 폴더 등)을 EC2로 복사
+          - name: Copy files to EC2 via SCP
+            uses: appleboy/scp-action@v0.1.7
+            with:
+              host: ${{ secrets.EC2_HOST }}
+              username: ${{ secrets.EC2_USERNAME }}
+              key: ${{ secrets.EC2_SSH_KEY }}
+              source: "docker-compose.yml,nginx/"
+              target: ${{ secrets.EC2_TARGET }}
+
+          # 2. EC2 접속 후 down -> pull -> up 순서로 실행
+          - name: Execute remote SSH commands
+            uses: appleboy/ssh-action@v1.0.3
+            with:
+              host: ${{ secrets.EC2_HOST }}
+              username: ${{ secrets.EC2_USERNAME }}
+              key: ${{ secrets.EC2_SSH_KEY }}
+              script: |
+                cd ${{ secrets.EC2_TARGET }}
+                docker-compose down
+                docker-compose pull
+                docker-compose up -d
+                docker image prune -f
